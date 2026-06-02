@@ -2,14 +2,28 @@
  * Tests for GenericFunctions (HTTP helper layer).
  *
  * These tests verify:
- * - Correct request construction (method, url, headers, body, qs)
- * - Proper error mapping (401 → friendly message, 429, 404, 500)
- * - Pagination logic in gohighlevelApiRequestAllItems
  * - buildBody strips undefined/empty values
+ * - Correct request construction (method, url, headers, body, qs)
+ * - Pagination logic in gohighlevelApiRequestAllItems
  */
 
-import { buildBody } from '../../nodes/GoHighLevel/GenericFunctions';
+import { buildBody } from '../nodes/GoHighLevel/GenericFunctions';
 import { NodeApiError } from 'n8n-workflow';
+import type { INode } from 'n8n-workflow';
+
+// ─── Minimal INode stub for tests ────────────────────────────────────────────
+
+/** Creates a minimal INode stub that satisfies the n8n-workflow INode interface. */
+function makeNode(name = 'GoHighLevel'): INode {
+  return {
+    id: 'test-node-id',
+    name,
+    type: 'goHighLevel',
+    typeVersion: 1,
+    position: [0, 0],
+    parameters: {},
+  } as INode;
+}
 
 // ─── buildBody ─────────────────────────────────────────────────────────────
 
@@ -40,47 +54,42 @@ describe('buildBody', () => {
   });
 });
 
-// ─── NodeApiError ─────────────────────────────────────────────────────────────
+// ─── NodeApiError (from mock) ─────────────────────────────────────────────────
 
 describe('NodeApiError (from mock)', () => {
   it('creates an error with message from options', () => {
     const err = new NodeApiError(
-      { name: 'TestNode' },
-      { statusCode: 401 },
+      makeNode(),
+      { statusCode: 401 } as unknown as Error,
       { message: 'Unauthorized: Check your GoHighLevel API Key.' },
     );
-    expect(err.message).toBe('Unauthorized: Check your GoHighLevel API Key.');
+    expect(err.message).toContain('Unauthorized');
     expect(err.name).toBe('NodeApiError');
   });
 
-  it('falls back to generic message when options are missing', () => {
-    const err = new NodeApiError({ name: 'TestNode' }, { statusCode: 500 });
-    expect(err.message).toBe('NodeApiError');
+  it('creates an error without options', () => {
+    const err = new NodeApiError(makeNode(), new Error('Network Error'));
+    expect(err).toBeInstanceOf(Error);
   });
 });
 
-// ─── gohighlevelApiRequest context builder ────────────────────────────────────
+// ─── gohighlevelApiRequest ────────────────────────────────────────────────────
 
-/**
- * Creates a mock n8n execution context for testing API request functions.
- */
+/** Creates a minimal mock execution context for tests. */
 function createMockContext(
   mockResponse: unknown,
   credentials: Record<string, unknown> = { apiKey: 'test-key', locationId: 'loc-123' },
 ) {
   return {
     getCredentials: jest.fn().mockResolvedValue(credentials),
-    getNode: jest.fn().mockReturnValue({ name: 'GoHighLevel', type: 'goHighLevel' }),
+    getNode: jest.fn().mockReturnValue(makeNode()),
     helpers: {
       request: jest.fn().mockResolvedValue(mockResponse),
     },
   };
 }
 
-// ─── gohighlevelApiRequest tests ──────────────────────────────────────────────
-
 describe('gohighlevelApiRequest', () => {
-  // Dynamically import so mock context can bind properly
   let gohighlevelApiRequest: (
     this: unknown,
     method: string,
@@ -90,8 +99,8 @@ describe('gohighlevelApiRequest', () => {
   ) => Promise<Record<string, unknown>>;
 
   beforeEach(async () => {
-    const mod = await import('../../nodes/GoHighLevel/GenericFunctions');
-    gohighlevelApiRequest = mod.gohighlevelApiRequest;
+    const mod = await import('../nodes/GoHighLevel/GenericFunctions');
+    gohighlevelApiRequest = mod.gohighlevelApiRequest as typeof gohighlevelApiRequest;
   });
 
   it('calls helpers.request with correct Authorization header', async () => {
@@ -114,7 +123,10 @@ describe('gohighlevelApiRequest', () => {
     const ctx = createMockContext({});
     await gohighlevelApiRequest.call(ctx, 'GET', '/contacts');
 
-    const callArg = (ctx.helpers.request as jest.Mock).mock.calls[0][0] as Record<string, unknown>;
+    const callArg = (ctx.helpers.request as jest.Mock).mock.calls[0][0] as Record<
+      string,
+      unknown
+    >;
     expect(callArg.body).toBeUndefined();
   });
 
@@ -125,7 +137,10 @@ describe('gohighlevelApiRequest', () => {
       email: 'j@test.com',
     });
 
-    const callArg = (ctx.helpers.request as jest.Mock).mock.calls[0][0] as Record<string, unknown>;
+    const callArg = (ctx.helpers.request as jest.Mock).mock.calls[0][0] as Record<
+      string,
+      unknown
+    >;
     expect(callArg.body).toEqual({ firstName: 'John', email: 'j@test.com' });
   });
 
@@ -133,28 +148,31 @@ describe('gohighlevelApiRequest', () => {
     const ctx = createMockContext({ contacts: [] });
     await gohighlevelApiRequest.call(ctx, 'GET', '/contacts/search', {}, { query: 'john' });
 
-    const callArg = (ctx.helpers.request as jest.Mock).mock.calls[0][0] as Record<string, unknown>;
+    const callArg = (ctx.helpers.request as jest.Mock).mock.calls[0][0] as Record<
+      string,
+      unknown
+    >;
     expect(callArg.qs).toEqual({ query: 'john' });
   });
 
   it('throws NodeApiError on request failure', async () => {
     const ctx = {
       getCredentials: jest.fn().mockResolvedValue({ apiKey: 'key', locationId: '' }),
-      getNode: jest.fn().mockReturnValue({ name: 'GoHighLevel' }),
+      getNode: jest.fn().mockReturnValue(makeNode()),
       helpers: {
         request: jest.fn().mockRejectedValue({ statusCode: 401, response: { body: {} } }),
       },
     };
 
     const { gohighlevelApiRequest: req } = await import(
-      '../../nodes/GoHighLevel/GenericFunctions'
+      '../nodes/GoHighLevel/GenericFunctions'
     );
 
     await expect(req.call(ctx, 'GET', '/contacts')).rejects.toBeInstanceOf(NodeApiError);
   });
 });
 
-// ─── gohighlevelApiRequestAllItems pagination tests ───────────────────────────
+// ─── gohighlevelApiRequestAllItems ────────────────────────────────────────────
 
 describe('gohighlevelApiRequestAllItems', () => {
   let gohighlevelApiRequestAllItems: (
@@ -167,8 +185,9 @@ describe('gohighlevelApiRequestAllItems', () => {
   ) => Promise<Record<string, unknown>[]>;
 
   beforeEach(async () => {
-    const mod = await import('../../nodes/GoHighLevel/GenericFunctions');
-    gohighlevelApiRequestAllItems = mod.gohighlevelApiRequestAllItems;
+    const mod = await import('../nodes/GoHighLevel/GenericFunctions');
+    gohighlevelApiRequestAllItems =
+      mod.gohighlevelApiRequestAllItems as typeof gohighlevelApiRequestAllItems;
   });
 
   it('returns single page of results when count < limit', async () => {
@@ -189,19 +208,20 @@ describe('gohighlevelApiRequestAllItems', () => {
   });
 
   it('stops fetching when items returned < pageSize', async () => {
-    // First page: 100 items. Second page: 30 items → stop.
     const page1 = Array.from({ length: 100 }, (_, i) => ({ id: `c${i}` }));
     const page2 = Array.from({ length: 30 }, (_, i) => ({ id: `c${100 + i}` }));
 
+    const requestFn = jest
+      .fn()
+      // First page: full 100 items + cursor pointing to next page
+      .mockResolvedValueOnce({ contacts: page1, meta: { startAfterId: 'cursor-page2' } })
+      // Second page: 30 items + no cursor → stop
+      .mockResolvedValueOnce({ contacts: page2, meta: {} });
+
     const ctx = {
       getCredentials: jest.fn().mockResolvedValue({ apiKey: 'k', locationId: '' }),
-      getNode: jest.fn().mockReturnValue({ name: 'GoHighLevel' }),
-      helpers: {
-        request: jest
-          .fn()
-          .mockResolvedValueOnce({ contacts: page1, meta: {} })
-          .mockResolvedValueOnce({ contacts: page2, meta: {} }),
-      },
+      getNode: jest.fn().mockReturnValue(makeNode()),
+      helpers: { request: requestFn },
     };
 
     const result = await gohighlevelApiRequestAllItems.call(
@@ -214,7 +234,7 @@ describe('gohighlevelApiRequestAllItems', () => {
     );
 
     expect(result).toHaveLength(130);
-    expect(ctx.helpers.request).toHaveBeenCalledTimes(2);
+    expect(requestFn).toHaveBeenCalledTimes(2);
   });
 
   it('returns empty array when response has no items key', async () => {

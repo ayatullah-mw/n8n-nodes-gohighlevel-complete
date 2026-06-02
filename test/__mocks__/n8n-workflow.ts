@@ -1,44 +1,50 @@
 /**
- * Mock for n8n-workflow package used in Jest tests.
- * Provides stub implementations of the types and classes used by the node.
+ * Runtime mock for n8n-workflow used by Jest.
+ *
+ * Provides stub implementations of classes and enums needed by the node source files.
+ * This avoids loading the actual n8n-workflow ESM bundle which doesn't run under CommonJS Jest.
  */
 
-export class NodeApiError extends Error {
+class NodeApiError extends Error {
+  public readonly node: unknown;
+  public readonly error: unknown;
+  public readonly options?: { message?: string; description?: string };
+
   constructor(
-    public readonly node: unknown,
-    public readonly error: unknown,
-    public readonly options?: { message?: string; description?: string },
+    node: unknown,
+    error: unknown,
+    options?: { message?: string; description?: string },
   ) {
-    super(options?.message ?? 'NodeApiError');
+    const msg =
+      options?.message ??
+      (error instanceof Error ? error.message : 'NodeApiError');
+    super(msg);
     this.name = 'NodeApiError';
+    this.node = node;
+    this.error = error;
+    this.options = options;
   }
 }
 
-export class NodeOperationError extends Error {
-  constructor(
-    public readonly node: unknown,
-    message: string,
-    public readonly options?: { itemIndex?: number },
-  ) {
+class NodeOperationError extends Error {
+  public readonly node: unknown;
+  public readonly options?: { itemIndex?: number };
+
+  constructor(node: unknown, message: string, options?: { itemIndex?: number }) {
     super(message);
     this.name = 'NodeOperationError';
+    this.node = node;
+    this.options = options;
   }
 }
 
-// Type stubs — Jest doesn't need the runtime implementations, only the types
-export type IDataObject = Record<string, unknown>;
-export type INodeProperties = unknown;
-export type INodePropertyOptions = { name: string; value: string };
-export type INodeType = unknown;
-export type INodeTypeDescription = unknown;
-export type INodeExecutionData = { json: IDataObject; pairedItem?: unknown };
-export type IExecuteFunctions = unknown;
-export type ILoadOptionsFunctions = unknown;
-export type IHookFunctions = unknown;
-export type IHttpRequestMethods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
-export type IRequestOptions = unknown;
-export type IAuthenticateGeneric = unknown;
-export type ICredentialTestRequest = unknown;
-export type ICredentialType = unknown;
-export type JsonObject = Record<string, unknown>;
-export type INodeProperties_v2 = unknown;
+// Enum stub — mirrors NodeConnectionType.Main used in node files
+const NodeConnectionType = {
+  Main: 'main',
+} as const;
+
+module.exports = {
+  NodeApiError,
+  NodeOperationError,
+  NodeConnectionType,
+};

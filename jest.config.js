@@ -3,19 +3,17 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>/test'],
+  modulePaths: ['<rootDir>'],
   testMatch: ['**/*.test.ts'],
   transform: {
     '^.+\\.tsx?$': [
       'ts-jest',
       {
-        tsconfig: {
-          strict: true,
-          esModuleInterop: true,
-          skipLibCheck: true,
-        },
+        tsconfig: 'tsconfig.test.json',
       },
     ],
   },
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   moduleNameMapper: {
     '^n8n-workflow$': '<rootDir>/test/__mocks__/n8n-workflow.ts',
   },

@@ -13,13 +13,13 @@ Automate your GoHighLevel workflows directly from n8n — manage contacts, pipel
 1. Open your n8n instance
 2. Go to **Settings → Community Nodes**
 3. Click **Install**
-4. Enter `n8n-nodes-gohighlevel`
+4. Enter `n8n-nodes-gohighlevel-complete`
 5. Click **Install** and restart n8n
 
 ### Manual Installation
 
 ```bash
-npm install n8n-nodes-gohighlevel
+npm install n8n-nodes-gohighlevel-complete
 ```
 
 Then restart your n8n instance.
@@ -52,13 +52,13 @@ This node uses the **GoHighLevel API v2** with Bearer token authentication.
 
 ### Contacts
 
-| Operation      | Description                          |
-|----------------|--------------------------------------|
-| **Create**     | Create a new CRM contact             |
-| **Get**        | Retrieve a contact by ID             |
-| **Update**     | Update contact fields                |
-| **Delete**     | Delete a contact by ID               |
-| **Search**     | Search contacts by name/email/phone  |
+| Operation  | Description                         |
+| ---------- | ----------------------------------- |
+| **Create** | Create a new CRM contact            |
+| **Get**    | Retrieve a contact by ID            |
+| **Update** | Update contact fields               |
+| **Delete** | Delete a contact by ID              |
+| **Search** | Search contacts by name/email/phone |
 
 **Available fields:** First Name, Last Name, Email, Phone, Company Name, Location ID, Tags (comma-separated), Address, City, State, Country, Postal Code, Website, Date of Birth, DND, Source
 
@@ -66,15 +66,16 @@ This node uses the **GoHighLevel API v2** with Bearer token authentication.
 
 ### Opportunities
 
-| Operation      | Description                              |
-|----------------|------------------------------------------|
-| **Create**     | Create a deal in a pipeline stage        |
-| **Get**        | Retrieve an opportunity by ID            |
-| **Update**     | Update status, stage, or value           |
-| **List**       | List opportunities in a pipeline         |
-| **Delete**     | Delete an opportunity by ID              |
+| Operation  | Description                       |
+| ---------- | --------------------------------- |
+| **Create** | Create a deal in a pipeline stage |
+| **Get**    | Retrieve an opportunity by ID     |
+| **Update** | Update status, stage, or value    |
+| **List**   | List opportunities in a pipeline  |
+| **Delete** | Delete an opportunity by ID       |
 
 **Dynamic Dropdowns:**
+
 - 🔽 **Pipeline** — loads all pipelines for your location
 - 🔽 **Stage** — auto-updates based on selected pipeline
 
@@ -82,27 +83,29 @@ This node uses the **GoHighLevel API v2** with Bearer token authentication.
 
 ### Calendars & Appointments
 
-| Operation              | Description                          |
-|------------------------|--------------------------------------|
-| **List Calendars**     | List all calendars in a location     |
-| **Create Appointment** | Book a new appointment               |
-| **Get Appointment**    | Retrieve an appointment by ID        |
-| **Update Appointment** | Change status, time, or notes        |
-| **Delete Appointment** | Remove an appointment                |
+| Operation              | Description                      |
+| ---------------------- | -------------------------------- |
+| **List Calendars**     | List all calendars in a location |
+| **Create Appointment** | Book a new appointment           |
+| **Get Appointment**    | Retrieve an appointment by ID    |
+| **Update Appointment** | Change status, time, or notes    |
+| **Delete Appointment** | Remove an appointment            |
 
 **Dynamic Dropdowns:**
+
 - 🔽 **Calendar** — loads all available calendars
 
 ---
 
 ### Workflows
 
-| Operation              | Description                            |
-|------------------------|----------------------------------------|
-| **List**               | List all published workflows           |
-| **Trigger for Contact**| Enroll a contact into a workflow       |
+| Operation               | Description                      |
+| ----------------------- | -------------------------------- |
+| **List**                | List all published workflows     |
+| **Trigger for Contact** | Enroll a contact into a workflow |
 
 **Dynamic Dropdowns:**
+
 - 🔽 **Workflow** — loads all published workflows
 
 ---
@@ -250,13 +253,13 @@ Full API docs: https://highlevel.stoplight.io/docs/integrations
 
 The node handles GoHighLevel API errors gracefully and surfaces friendly messages in n8n:
 
-| HTTP Status | Meaning                  | n8n Message                                         |
-|-------------|--------------------------|-----------------------------------------------------|
-| 401         | Unauthorized             | Check your API Key in credentials                   |
-| 403         | Forbidden                | Insufficient key permissions or wrong Location ID   |
-| 404         | Not Found                | The requested resource does not exist               |
-| 429         | Rate Limited             | Use n8n's "Retry on Fail" option                    |
-| 5xx         | Server Error             | GoHighLevel API internal error                      |
+| HTTP Status | Meaning      | n8n Message                                       |
+| ----------- | ------------ | ------------------------------------------------- |
+| 401         | Unauthorized | Check your API Key in credentials                 |
+| 403         | Forbidden    | Insufficient key permissions or wrong Location ID |
+| 404         | Not Found    | The requested resource does not exist             |
+| 429         | Rate Limited | Use n8n's "Retry on Fail" option                  |
+| 5xx         | Server Error | GoHighLevel API internal error                    |
 
 Enable **Continue on Fail** in the node settings to process remaining items if one fails.
 

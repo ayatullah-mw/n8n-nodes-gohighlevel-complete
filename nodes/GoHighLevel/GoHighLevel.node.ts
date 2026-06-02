@@ -6,6 +6,7 @@ import {
   INodeType,
   INodeTypeDescription,
   NodeOperationError,
+  NodeConnectionType,
   IDataObject,
 } from 'n8n-workflow';
 
@@ -33,8 +34,8 @@ export class GoHighLevel implements INodeType {
     defaults: {
       name: 'GoHighLevel',
     },
-    inputs: ['main'],
-    outputs: ['main'],
+    inputs: [NodeConnectionType.Main],
+    outputs: [NodeConnectionType.Main],
     credentials: [
       {
         name: 'goHighLevelApi',
@@ -380,7 +381,7 @@ async function executeOpportunity(
   this: IExecuteFunctions,
   operation: string,
   i: number,
-  defaultLocationId: string,
+  _defaultLocationId: string,
 ): Promise<IDataObject | IDataObject[]> {
   if (operation === 'create') {
     const pipelineId = this.getNodeParameter('pipelineId', i) as string;

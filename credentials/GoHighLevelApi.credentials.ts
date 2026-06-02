@@ -18,7 +18,6 @@ export class GoHighLevelApi implements ICredentialType {
   name = 'goHighLevelApi';
   displayName = 'GoHighLevel API';
   documentationUrl = 'https://highlevel.stoplight.io/docs/integrations/0443d7d1a4bd0-overview';
-  icon = 'file:GoHighLevel.svg';
 
   properties: INodeProperties[] = [
     {
